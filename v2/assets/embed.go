@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	classifier "github.com/aquasecurity/licenseclassifier/v2"
+	classifier "github.com/google/licenseclassifier/v2"
 )
 
 //go:embed */*/*
