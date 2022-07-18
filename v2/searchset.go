@@ -171,8 +171,8 @@ func (m matchRanges) Less(i, j int) bool {
 // are best potential matches to the source (known) text.
 func (c *Classifier) findPotentialMatches(src, target *searchSet, confidence float64) matchRanges {
 	matchedRanges := c.getMatchedRanges(src, target, confidence, src.q)
-	if c.tc.traceSearchset(src.origin) {
-		c.tc.trace("matchedRanges = %s", spew.Sdump(matchedRanges))
+	if c.Tc.traceSearchset(src.origin) {
+		c.Tc.trace("matchedRanges = %s", spew.Sdump(matchedRanges))
 	}
 	if len(matchedRanges) == 0 {
 		return nil
@@ -301,15 +301,15 @@ func (c *Classifier) fuseRanges(origin string, matched matchRanges, confidence f
 		if unclaimed && m.TokensClaimed*10 > matched[0].TokensClaimed {
 			claimed = append(claimed, m)
 		}
-		if c.tc.traceSearchset(origin) {
-			c.tc.trace("after %d ranges, claimed is %s", i, spew.Sdump(claimed))
+		if c.Tc.traceSearchset(origin) {
+			c.Tc.trace("after %d ranges, claimed is %s", i, spew.Sdump(claimed))
 		}
 	}
 	sort.Sort(claimed)
-	if c.tc.traceSearchset(origin) {
-		c.tc.trace("filterPasses = %+v", filterPasses)
-		c.tc.trace("filterDrops = %+v", filterDrops)
-		c.tc.trace("claimed = %s", spew.Sdump(claimed))
+	if c.Tc.traceSearchset(origin) {
+		c.Tc.trace("filterPasses = %+v", filterPasses)
+		c.Tc.trace("filterDrops = %+v", filterDrops)
+		c.Tc.trace("claimed = %s", spew.Sdump(claimed))
 	}
 	return claimed
 }
@@ -318,16 +318,16 @@ func (c *Classifier) fuseRanges(origin string, matched matchRanges, confidence f
 // text. The ranges returned are ordered from the entries with the most matched
 // tokens to the least.
 func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64, q int) matchRanges {
-	shouldTrace := c.tc.traceSearchset(src.origin)
+	shouldTrace := c.Tc.traceSearchset(src.origin)
 
 	if shouldTrace {
-		c.tc.trace("src.origin = %+v", src.origin)
+		c.Tc.trace("src.origin = %+v", src.origin)
 	}
 	// Assemble a list of all the matched q-grams without any consideration to
 	// error tolerances.
 	matched := targetMatchedRanges(src, target)
 	if shouldTrace {
-		c.tc.trace("matched = %s", spew.Sdump(matched))
+		c.Tc.trace("matched = %s", spew.Sdump(matched))
 	}
 	if len(matched) == 0 {
 		return nil
@@ -349,7 +349,7 @@ func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64
 	runs := c.detectRuns(src.origin, matched, len(target.Tokens), len(src.Tokens), confidence, q)
 
 	if shouldTrace {
-		c.tc.trace("runs = %d: %s", len(runs), spew.Sdump(runs))
+		c.Tc.trace("runs = %d: %s", len(runs), spew.Sdump(runs))
 	}
 
 	// If there are no target runs of source tokens, we're done.
@@ -363,13 +363,13 @@ func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64
 
 	fr := c.fuseRanges(src.origin, matched, confidence, len(src.Tokens), runs, len(target.Tokens))
 	if shouldTrace {
-		c.tc.trace("fr = %s", spew.Sdump(fr))
+		c.Tc.trace("fr = %s", spew.Sdump(fr))
 	}
 	return fr
 }
 
 func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength, subsetLength int, threshold float64, q int) []matchRange {
-	shouldTrace := c.tc.traceSearchset(origin)
+	shouldTrace := c.Tc.traceSearchset(origin)
 	hits := make([]bool, targetLength)
 	for _, m := range matched {
 		for idx := m.TargetStart; idx < m.TargetEnd; idx++ {
@@ -385,16 +385,16 @@ func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength
 	total := 0
 	target := int(float64(subsetLength) * threshold)
 	if shouldTrace {
-		c.tc.trace("target = %+v", target)
-		c.tc.trace("targetLength = %+v", targetLength)
-		c.tc.trace("subsetLength = %+v", subsetLength)
+		c.Tc.trace("target = %+v", target)
+		c.Tc.trace("targetLength = %+v", targetLength)
+		c.Tc.trace("subsetLength = %+v", subsetLength)
 	}
 
 	// If we don't have at least 1 subset (i.e. the target is shorter than the
 	// source) just analyze what we have.
 	if len(hits) < subsetLength {
 		if shouldTrace {
-			c.tc.trace("trimmed search length from %d to %d", subsetLength, len(hits))
+			c.Tc.trace("trimmed search length from %d to %d", subsetLength, len(hits))
 		}
 		subsetLength = len(hits)
 	}

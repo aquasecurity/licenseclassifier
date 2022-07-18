@@ -113,9 +113,9 @@ func (c *Classifier) addDocument(category, name, variant string, doc *document) 
 	indexName := c.generateDocName(category, name, variant)
 	id := c.generateIndexedDocument(doc, true)
 	id.generateFrequencies()
-	id.generateSearchSet(c.q)
+	id.generateSearchSet(c.Q)
 	id.s.origin = indexName
-	c.docs[indexName] = id
+	c.Docs[indexName] = id
 }
 
 // generateIndexedDocument creates an indexedDocument from the supplied document. if addWords
@@ -123,7 +123,7 @@ func (c *Classifier) addDocument(category, name, variant string, doc *document) 
 func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *indexedDocument {
 	id := &indexedDocument{
 		Tokens: make([]indexedToken, 0, len(d.Tokens)),
-		dict:   c.dict,
+		dict:   c.Dict,
 	}
 
 	for _, t := range d.Tokens {
@@ -159,7 +159,7 @@ func (c *Classifier) generateDocName(category, name, variant string) string {
 	return fmt.Sprintf("%s%c%s%c%s", category, os.PathSeparator, name, os.PathSeparator, variant)
 }
 func (c *Classifier) getIndexedDocument(category, name, variant string) *indexedDocument {
-	return c.docs[c.generateDocName(category, name, variant)]
+	return c.Docs[c.generateDocName(category, name, variant)]
 }
 
 // dictionary is used to intern all the token words encountered in the text corpus.
