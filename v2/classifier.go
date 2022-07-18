@@ -16,6 +16,8 @@ package classifier
 
 import (
 	"bytes"
+	_ "embed"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,7 +70,7 @@ func (d Matches) Less(i, j int) bool {
 func (c *Classifier) match(in []byte) Results {
 	id := c.createTargetIndexedDocument(in)
 
-	firstPass := make(map[string]*indexedDocument)
+	firstPass := make(map[string]*IndexedDocument)
 	for l, d := range c.Docs {
 		sim := id.tokenSimilarity(d)
 
@@ -190,8 +192,8 @@ func (c *Classifier) match(in []byte) Results {
 // content.
 type Classifier struct {
 	Tc        *TraceConfiguration
-	Dict      *dictionary
-	Docs      map[string]*indexedDocument
+	Dict      *Dictionary
+	Docs      map[string]*IndexedDocument
 	Threshold float64
 	Q         int // The value of q for q-grams in this corpus
 }
@@ -201,11 +203,24 @@ func NewClassifier(threshold float64) *Classifier {
 	classifier := &Classifier{
 		Tc:        new(TraceConfiguration),
 		Dict:      newDictionary(),
-		Docs:      make(map[string]*indexedDocument),
+		Docs:      make(map[string]*IndexedDocument),
 		Threshold: threshold,
 		Q:         computeQ(threshold),
 	}
 	return classifier
+}
+
+//go:embed classifier.gob
+var b []byte
+
+func NewDefaultClassifier() *Classifier {
+	var c = &Classifier{}
+
+	dec := gob.NewDecoder(bytes.NewBuffer(b))
+	if err := dec.Decode(c); err != nil {
+		panic(err)
+	}
+	return c
 }
 
 // Normalize takes input content and applies the following transforms to aid in

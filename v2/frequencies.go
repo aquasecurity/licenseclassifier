@@ -14,23 +14,23 @@
 
 package classifier
 
-type frequencyTable struct {
+type FrequencyTable struct {
 	counts map[tokenID]int // key: token ID, value: number of instances of that token
 }
 
-func newFrequencyTable() *frequencyTable {
-	return &frequencyTable{
+func newFrequencyTable() *FrequencyTable {
+	return &FrequencyTable{
 		counts: make(map[tokenID]int),
 	}
 }
 
-func (f *frequencyTable) update(d *indexedDocument) {
+func (f *FrequencyTable) update(d *IndexedDocument) {
 	for _, tok := range d.Tokens {
 		f.counts[tok.ID]++
 	}
 }
 
-func (d *indexedDocument) generateFrequencies() {
+func (d *IndexedDocument) generateFrequencies() {
 	d.f = newFrequencyTable()
 	d.f.update(d)
 }
@@ -38,7 +38,7 @@ func (d *indexedDocument) generateFrequencies() {
 // TokenSimilarity returns a confidence score of how well d contains
 // the tokens of o. This is used as a fast similarity metric to
 // avoid running more expensive classifiers.
-func (d *indexedDocument) tokenSimilarity(o *indexedDocument) float64 {
+func (d *IndexedDocument) tokenSimilarity(o *IndexedDocument) float64 {
 	hits := 0
 	// For each token in the source document, see if the target has "enough" instances
 	// of that token to possibly be a match to the target.

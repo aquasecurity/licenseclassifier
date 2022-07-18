@@ -33,7 +33,7 @@ const (
 // score computes a metric of similarity between the known and unknown
 // document, including the offsets into the unknown that yield the content
 // generating the computed similarity.
-func (c *Classifier) score(id string, unknown, known *indexedDocument, unknownStart, unknownEnd int) (float64, int, int) {
+func (c *Classifier) score(id string, unknown, known *IndexedDocument, unknownStart, unknownEnd int) (float64, int, int) {
 	if c.Tc.traceScoring(known.s.origin) {
 		c.Tc.trace("Scoring %s: [%d-%d]", known.s.origin, unknownStart, unknownEnd)
 	}

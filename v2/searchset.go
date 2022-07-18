@@ -23,9 +23,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-// searchSet is a set of q-grams that have hashes associated with them,
+// SearchSet is a set of q-grams that have hashes associated with them,
 // making it fast to search for potential matches.
-type searchSet struct {
+type SearchSet struct {
 	// Tokens is a tokenized list of the original input string.
 	Tokens []indexedToken
 	// Hashes is a map of checksums to a range of tokens.
@@ -51,11 +51,11 @@ func (n *node) String() string {
 	return fmt.Sprintf("[%d:%d]", n.tokens.Start, n.tokens.End)
 }
 
-// newSearchSet creates a new searchSet object. A searchset generates all
+// newSearchSet creates a new SearchSet object. A searchset generates all
 // possible q-grams of tokens. These q-grams of tokens can be correlated to
 // determine where a section of text from one source may appear in another
 // source.
-func newSearchSet(s *indexedDocument, q int) *searchSet {
+func newSearchSet(s *IndexedDocument, q int) *SearchSet {
 	// Start generating hash values for all q-grams within the text.
 	h := make(hash)
 	if len(s.Tokens) < q {
@@ -63,7 +63,7 @@ func newSearchSet(s *indexedDocument, q int) *searchSet {
 		q = len(s.Tokens)
 	}
 	checksums, tokenRanges := generateHashes(h, q, s.Tokens, s.dict)
-	sset := &searchSet{
+	sset := &SearchSet{
 		Tokens:         s.Tokens,
 		Hashes:         h,
 		Checksums:      checksums,
@@ -88,7 +88,7 @@ func (t *tokenRange) String() string {
 type tokenRanges []*tokenRange
 
 // generateHashes computes a hash using CRC-32 for each q-gram encountered in the provided tokens.
-func generateHashes(h hash, q int, toks []indexedToken, dict *dictionary) ([]uint32, tokenRanges) {
+func generateHashes(h hash, q int, toks []indexedToken, dict *Dictionary) ([]uint32, tokenRanges) {
 	if q == 0 {
 		return nil, nil
 	}
@@ -111,7 +111,7 @@ func generateHashes(h hash, q int, toks []indexedToken, dict *dictionary) ([]uin
 }
 
 // generateNodeList creates a node list out of the search set.
-func (s *searchSet) generateNodeList() {
+func (s *SearchSet) generateNodeList() {
 	if len(s.Tokens) == 0 {
 		return
 	}
@@ -169,7 +169,7 @@ func (m matchRanges) Less(i, j int) bool {
 
 // findPotentialMatches returns the ranges in the target (unknown) text that
 // are best potential matches to the source (known) text.
-func (c *Classifier) findPotentialMatches(src, target *searchSet, confidence float64) matchRanges {
+func (c *Classifier) findPotentialMatches(src, target *SearchSet, confidence float64) matchRanges {
 	matchedRanges := c.getMatchedRanges(src, target, confidence, src.q)
 	if c.Tc.traceSearchset(src.origin) {
 		c.Tc.trace("matchedRanges = %s", spew.Sdump(matchedRanges))
@@ -317,7 +317,7 @@ func (c *Classifier) fuseRanges(origin string, matched matchRanges, confidence f
 // getMatchedRanges finds the ranges in the target text that match the source
 // text. The ranges returned are ordered from the entries with the most matched
 // tokens to the least.
-func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64, q int) matchRanges {
+func (c *Classifier) getMatchedRanges(src, target *SearchSet, confidence float64, q int) matchRanges {
 	shouldTrace := c.Tc.traceSearchset(src.origin)
 
 	if shouldTrace {
@@ -447,7 +447,7 @@ func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength
 	return final
 }
 
-func targetMatchedRanges(src, target *searchSet) matchRanges {
+func targetMatchedRanges(src, target *SearchSet) matchRanges {
 	offsetMappings := make(map[int][]*matchRange)
 
 	var matched matchRanges

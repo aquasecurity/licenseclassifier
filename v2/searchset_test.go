@@ -56,13 +56,13 @@ func TestSearchSet_New(t *testing.T) {
 		description string
 		text        string
 		q           int
-		want        *searchSet
+		want        *SearchSet
 	}{
 		{
 			description: "Empty string",
 			text:        "",
 			q:           4,
-			want: &searchSet{
+			want: &SearchSet{
 				Tokens:         []indexedToken{},
 				Hashes:         make(hash),
 				Checksums:      nil,
@@ -73,7 +73,7 @@ func TestSearchSet_New(t *testing.T) {
 			description: "Small string",
 			text:        "Hello world",
 			q:           4,
-			want: &searchSet{
+			want: &SearchSet{
 				Tokens: []indexedToken{
 					{Index: 0, Line: 1, ID: 1},
 					{Index: 1, Line: 1, ID: 2},
