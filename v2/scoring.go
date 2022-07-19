@@ -33,9 +33,9 @@ const (
 // score computes a metric of similarity between the known and unknown
 // document, including the offsets into the unknown that yield the content
 // generating the computed similarity.
-func (c *Classifier) score(id string, unknown, known *indexedDocument, unknownStart, unknownEnd int) (float64, int, int) {
-	if c.tc.traceScoring(known.s.origin) {
-		c.tc.trace("Scoring %s: [%d-%d]", known.s.origin, unknownStart, unknownEnd)
+func (c *Classifier) score(id string, unknown, known *IndexedDocument, unknownStart, unknownEnd int) (float64, int, int) {
+	if c.Tc.traceScoring(known.S.origin) {
+		c.Tc.trace("Scoring %s: [%d-%d]", known.S.origin, unknownStart, unknownEnd)
 	}
 
 	knownLength := known.size()
@@ -44,14 +44,14 @@ func (c *Classifier) score(id string, unknown, known *indexedDocument, unknownSt
 	start, end := diffRange(known.norm, diffs)
 	distance := scoreDiffs(id, diffs[start:end])
 
-	if c.tc.traceScoring(known.s.origin) {
-		c.tc.trace("Diffs against %s:\n%s", known.s.origin, spew.Sdump(diffs[start:end]))
+	if c.Tc.traceScoring(known.S.origin) {
+		c.Tc.trace("Diffs against %s:\n%s", known.S.origin, spew.Sdump(diffs[start:end]))
 	}
 
 	if distance < 0 {
 		// If the distance is negative, this indicates an unacceptable diff so we return a zero-confidence match.
-		if c.tc.traceScoring(known.s.origin) {
-			c.tc.trace("Distance result %v, rejected match", distance)
+		if c.Tc.traceScoring(known.S.origin) {
+			c.Tc.trace("Distance result %v, rejected match", distance)
 		}
 		return 0.0, 0, 0
 	}
@@ -70,8 +70,8 @@ func (c *Classifier) score(id string, unknown, known *indexedDocument, unknownSt
 	// target.
 	conf, so, eo := confidencePercentage(knownLength, distance), textLength(diffs[:start]), textLength(diffs[end:])
 
-	if c.tc.traceScoring(known.s.origin) {
-		c.tc.trace("Score result: %v [%d-%d]", conf, so, eo)
+	if c.Tc.traceScoring(known.S.origin) {
+		c.Tc.trace("Score result: %v [%d-%d]", conf, so, eo)
 	}
 	return conf, so, eo
 }

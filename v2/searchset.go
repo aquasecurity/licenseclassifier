@@ -23,9 +23,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-// searchSet is a set of q-grams that have hashes associated with them,
+// SearchSet is a set of q-grams that have hashes associated with them,
 // making it fast to search for potential matches.
-type searchSet struct {
+type SearchSet struct {
 	// Tokens is a tokenized list of the original input string.
 	Tokens []indexedToken
 	// Hashes is a map of checksums to a range of tokens.
@@ -51,11 +51,11 @@ func (n *node) String() string {
 	return fmt.Sprintf("[%d:%d]", n.tokens.Start, n.tokens.End)
 }
 
-// newSearchSet creates a new searchSet object. A searchset generates all
+// newSearchSet creates a new SearchSet object. A searchset generates all
 // possible q-grams of tokens. These q-grams of tokens can be correlated to
 // determine where a section of text from one source may appear in another
 // source.
-func newSearchSet(s *indexedDocument, q int) *searchSet {
+func newSearchSet(s *IndexedDocument, q int) *SearchSet {
 	// Start generating hash values for all q-grams within the text.
 	h := make(hash)
 	if len(s.Tokens) < q {
@@ -63,7 +63,7 @@ func newSearchSet(s *indexedDocument, q int) *searchSet {
 		q = len(s.Tokens)
 	}
 	checksums, tokenRanges := generateHashes(h, q, s.Tokens, s.dict)
-	sset := &searchSet{
+	sset := &SearchSet{
 		Tokens:         s.Tokens,
 		Hashes:         h,
 		Checksums:      checksums,
@@ -88,7 +88,7 @@ func (t *tokenRange) String() string {
 type tokenRanges []*tokenRange
 
 // generateHashes computes a hash using CRC-32 for each q-gram encountered in the provided tokens.
-func generateHashes(h hash, q int, toks []indexedToken, dict *dictionary) ([]uint32, tokenRanges) {
+func generateHashes(h hash, q int, toks []indexedToken, dict *Dictionary) ([]uint32, tokenRanges) {
 	if q == 0 {
 		return nil, nil
 	}
@@ -111,7 +111,7 @@ func generateHashes(h hash, q int, toks []indexedToken, dict *dictionary) ([]uin
 }
 
 // generateNodeList creates a node list out of the search set.
-func (s *searchSet) generateNodeList() {
+func (s *SearchSet) generateNodeList() {
 	if len(s.Tokens) == 0 {
 		return
 	}
@@ -169,10 +169,10 @@ func (m matchRanges) Less(i, j int) bool {
 
 // findPotentialMatches returns the ranges in the target (unknown) text that
 // are best potential matches to the source (known) text.
-func (c *Classifier) findPotentialMatches(src, target *searchSet, confidence float64) matchRanges {
+func (c *Classifier) findPotentialMatches(src, target *SearchSet, confidence float64) matchRanges {
 	matchedRanges := c.getMatchedRanges(src, target, confidence, src.q)
-	if c.tc.traceSearchset(src.origin) {
-		c.tc.trace("matchedRanges = %s", spew.Sdump(matchedRanges))
+	if c.Tc.traceSearchset(src.origin) {
+		c.Tc.trace("matchedRanges = %s", spew.Sdump(matchedRanges))
 	}
 	if len(matchedRanges) == 0 {
 		return nil
@@ -301,15 +301,15 @@ func (c *Classifier) fuseRanges(origin string, matched matchRanges, confidence f
 		if unclaimed && m.TokensClaimed*10 > matched[0].TokensClaimed {
 			claimed = append(claimed, m)
 		}
-		if c.tc.traceSearchset(origin) {
-			c.tc.trace("after %d ranges, claimed is %s", i, spew.Sdump(claimed))
+		if c.Tc.traceSearchset(origin) {
+			c.Tc.trace("after %d ranges, claimed is %s", i, spew.Sdump(claimed))
 		}
 	}
 	sort.Sort(claimed)
-	if c.tc.traceSearchset(origin) {
-		c.tc.trace("filterPasses = %+v", filterPasses)
-		c.tc.trace("filterDrops = %+v", filterDrops)
-		c.tc.trace("claimed = %s", spew.Sdump(claimed))
+	if c.Tc.traceSearchset(origin) {
+		c.Tc.trace("filterPasses = %+v", filterPasses)
+		c.Tc.trace("filterDrops = %+v", filterDrops)
+		c.Tc.trace("claimed = %s", spew.Sdump(claimed))
 	}
 	return claimed
 }
@@ -317,17 +317,17 @@ func (c *Classifier) fuseRanges(origin string, matched matchRanges, confidence f
 // getMatchedRanges finds the ranges in the target text that match the source
 // text. The ranges returned are ordered from the entries with the most matched
 // tokens to the least.
-func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64, q int) matchRanges {
-	shouldTrace := c.tc.traceSearchset(src.origin)
+func (c *Classifier) getMatchedRanges(src, target *SearchSet, confidence float64, q int) matchRanges {
+	shouldTrace := c.Tc.traceSearchset(src.origin)
 
 	if shouldTrace {
-		c.tc.trace("src.origin = %+v", src.origin)
+		c.Tc.trace("src.origin = %+v", src.origin)
 	}
 	// Assemble a list of all the matched q-grams without any consideration to
 	// error tolerances.
 	matched := targetMatchedRanges(src, target)
 	if shouldTrace {
-		c.tc.trace("matched = %s", spew.Sdump(matched))
+		c.Tc.trace("matched = %s", spew.Sdump(matched))
 	}
 	if len(matched) == 0 {
 		return nil
@@ -349,7 +349,7 @@ func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64
 	runs := c.detectRuns(src.origin, matched, len(target.Tokens), len(src.Tokens), confidence, q)
 
 	if shouldTrace {
-		c.tc.trace("runs = %d: %s", len(runs), spew.Sdump(runs))
+		c.Tc.trace("runs = %d: %s", len(runs), spew.Sdump(runs))
 	}
 
 	// If there are no target runs of source tokens, we're done.
@@ -363,13 +363,13 @@ func (c *Classifier) getMatchedRanges(src, target *searchSet, confidence float64
 
 	fr := c.fuseRanges(src.origin, matched, confidence, len(src.Tokens), runs, len(target.Tokens))
 	if shouldTrace {
-		c.tc.trace("fr = %s", spew.Sdump(fr))
+		c.Tc.trace("fr = %s", spew.Sdump(fr))
 	}
 	return fr
 }
 
 func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength, subsetLength int, threshold float64, q int) []matchRange {
-	shouldTrace := c.tc.traceSearchset(origin)
+	shouldTrace := c.Tc.traceSearchset(origin)
 	hits := make([]bool, targetLength)
 	for _, m := range matched {
 		for idx := m.TargetStart; idx < m.TargetEnd; idx++ {
@@ -385,16 +385,16 @@ func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength
 	total := 0
 	target := int(float64(subsetLength) * threshold)
 	if shouldTrace {
-		c.tc.trace("target = %+v", target)
-		c.tc.trace("targetLength = %+v", targetLength)
-		c.tc.trace("subsetLength = %+v", subsetLength)
+		c.Tc.trace("target = %+v", target)
+		c.Tc.trace("targetLength = %+v", targetLength)
+		c.Tc.trace("subsetLength = %+v", subsetLength)
 	}
 
 	// If we don't have at least 1 subset (i.e. the target is shorter than the
 	// source) just analyze what we have.
 	if len(hits) < subsetLength {
 		if shouldTrace {
-			c.tc.trace("trimmed search length from %d to %d", subsetLength, len(hits))
+			c.Tc.trace("trimmed search length from %d to %d", subsetLength, len(hits))
 		}
 		subsetLength = len(hits)
 	}
@@ -447,7 +447,7 @@ func (c *Classifier) detectRuns(origin string, matched matchRanges, targetLength
 	return final
 }
 
-func targetMatchedRanges(src, target *searchSet) matchRanges {
+func targetMatchedRanges(src, target *SearchSet) matchRanges {
 	offsetMappings := make(map[int][]*matchRange)
 
 	var matched matchRanges

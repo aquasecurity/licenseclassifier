@@ -45,9 +45,9 @@ func diffRange(known string, diffs []diffmatchpatch.Diff) (start, end int) {
 	return start, end
 }
 
-func docDiff(id string, doc1 *indexedDocument, doc1Start, doc1End int, doc2 *indexedDocument, doc2Start, doc2End int) []diffmatchpatch.Diff {
-	chars1 := doc1.runes[doc1Start:doc1End]
-	chars2 := doc2.runes[doc2Start:doc2End]
+func docDiff(id string, doc1 *IndexedDocument, doc1Start, doc1End int, doc2 *IndexedDocument, doc2Start, doc2End int) []diffmatchpatch.Diff {
+	chars1 := doc1.Runes[doc1Start:doc1End]
+	chars2 := doc2.Runes[doc2Start:doc2End]
 
 	dmp := diffmatchpatch.New()
 	diffs := dmp.DiffMainRunes(chars1, chars2, false)
@@ -57,7 +57,7 @@ func docDiff(id string, doc1 *indexedDocument, doc1Start, doc1End int, doc2 *ind
 	return diffs
 }
 
-func diffWordsToRunes(doc *indexedDocument, start, end int) []rune {
+func diffWordsToRunes(doc *IndexedDocument, start, end int) []rune {
 	// Creates a slice of runes using the indexed values as a basis for runes.
 	// The go-diff code basically does exactly this using ephemeral dictionaries
 	// for each input string. We leverage the fact we have a persistent dictionary
@@ -72,7 +72,7 @@ func diffWordsToRunes(doc *indexedDocument, start, end int) []rune {
 }
 
 // diffRunesToWords rehydrates the text in a diff from a string of word hashes to real words of text.
-func diffRunesToWords(diffs []diffmatchpatch.Diff, dict *dictionary) []diffmatchpatch.Diff {
+func diffRunesToWords(diffs []diffmatchpatch.Diff, dict *Dictionary) []diffmatchpatch.Diff {
 	hydrated := make([]diffmatchpatch.Diff, 0, len(diffs))
 	for _, aDiff := range diffs {
 		chars := []rune(aDiff.Text)

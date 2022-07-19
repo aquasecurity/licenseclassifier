@@ -16,6 +16,8 @@ package classifier
 
 import (
 	"bytes"
+	_ "embed"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -68,15 +70,15 @@ func (d Matches) Less(i, j int) bool {
 func (c *Classifier) match(in []byte) Results {
 	id := c.createTargetIndexedDocument(in)
 
-	firstPass := make(map[string]*indexedDocument)
-	for l, d := range c.docs {
+	firstPass := make(map[string]*IndexedDocument)
+	for l, d := range c.Docs {
 		sim := id.tokenSimilarity(d)
 
-		if c.tc.traceTokenize(l) {
-			c.tc.trace("Token similarity for %s: %.2f", l, sim)
+		if c.Tc.traceTokenize(l) {
+			c.Tc.trace("Token similarity for %s: %.2f", l, sim)
 		}
 
-		if sim >= c.threshold {
+		if sim >= c.Threshold {
 			firstPass[l] = d
 		}
 	}
@@ -89,16 +91,16 @@ func (c *Classifier) match(in []byte) Results {
 	}
 
 	// Perform the expensive work of generating a searchset to look for token runs.
-	id.generateSearchSet(c.q)
+	id.generateSearchSet(c.Q)
 
 	var candidates Matches
 	for l, d := range firstPass {
-		matches := c.findPotentialMatches(d.s, id.s, c.threshold)
+		matches := c.findPotentialMatches(d.S, id.S, c.Threshold)
 		for _, m := range matches {
 			startIndex := m.TargetStart
 			endIndex := m.TargetEnd
 			conf, startOffset, endOffset := c.score(l, id, d, startIndex, endIndex)
-			if conf >= c.threshold && (endIndex-startIndex-startOffset-endOffset) > 0 {
+			if conf >= c.Threshold && (endIndex-startIndex-startOffset-endOffset) > 0 {
 				candidates = append(candidates, &Match{
 					Name:            LicenseName(l),
 					Variant:         variantName(l),
@@ -189,30 +191,42 @@ func (c *Classifier) match(in []byte) Results {
 // Classifier provides methods for identifying open source licenses in text
 // content.
 type Classifier struct {
-	tc        *TraceConfiguration
-	dict      *dictionary
-	docs      map[string]*indexedDocument
-	threshold float64
-	q         int // The value of q for q-grams in this corpus
+	Tc        *TraceConfiguration
+	Dict      *Dictionary
+	Docs      map[string]*IndexedDocument
+	Threshold float64
+	Q         int // The value of q for q-grams in this corpus
 }
 
 // NewClassifier creates a classifier with an empty corpus.
 func NewClassifier(threshold float64) *Classifier {
 	classifier := &Classifier{
-		tc:        new(TraceConfiguration),
-		dict:      newDictionary(),
-		docs:      make(map[string]*indexedDocument),
-		threshold: threshold,
-		q:         computeQ(threshold),
+		Tc:        new(TraceConfiguration),
+		Dict:      newDictionary(),
+		Docs:      make(map[string]*IndexedDocument),
+		Threshold: threshold,
+		Q:         computeQ(threshold),
 	}
 	return classifier
+}
+
+//go:embed classifier.gob
+var b []byte
+
+func NewDefaultClassifier() *Classifier {
+	var c = &Classifier{}
+
+	dec := gob.NewDecoder(bytes.NewBuffer(b))
+	if err := dec.Decode(c); err != nil {
+		panic(err)
+	}
+	return c
 }
 
 // Normalize takes input content and applies the following transforms to aid in
 // identifying license content. The return value of this function is
 // line-separated text which is the basis for position values returned by the
 // classifier.
-//
 //
 // 1. Breaks up long lines of text. This helps with detecting licenses like in
 // TODO(wcn):URL reference
@@ -288,7 +302,7 @@ func (c *Classifier) LoadLicenses(dir string) error {
 		sep := fmt.Sprintf("%c", os.PathSeparator)
 		segments := strings.Split(relativePath, sep)
 		if len(segments) < 3 {
-			c.tc.trace("Insufficient segment count for path: %s", relativePath)
+			c.Tc.trace("Insufficient segment count for path: %s", relativePath)
 			continue
 		}
 		category, name, variant := segments[1], segments[2], segments[3]
@@ -304,8 +318,8 @@ func (c *Classifier) LoadLicenses(dir string) error {
 
 // SetTraceConfiguration installs a tracing configuration for the classifier.
 func (c *Classifier) SetTraceConfiguration(in *TraceConfiguration) {
-	c.tc = in
-	c.tc.init()
+	c.Tc = in
+	c.Tc.init()
 }
 
 // Match finds matches within an unknown text. This will not modify the contents

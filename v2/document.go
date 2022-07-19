@@ -42,20 +42,20 @@ type indexedToken struct {
 	ID    tokenID // identifier of the text in the dictionary
 }
 
-type indexedDocument struct {
+type IndexedDocument struct {
 	Tokens []indexedToken  // ordered tokens of the document
-	f      *frequencyTable // frequencies computed for this document
-	dict   *dictionary     // The corpus dictionary for this document
-	s      *searchSet      // The searchset for this document
-	runes  []rune
+	F      *FrequencyTable // frequencies computed for this document
+	dict   *Dictionary     // The corpus dictionary for this document
+	S      *SearchSet      // The searchset for this document
+	Runes  []rune
 	norm   string // The normalized token sequence
 }
 
-func (d *indexedDocument) generateSearchSet(q int) {
-	d.s = newSearchSet(d, q)
+func (d *IndexedDocument) generateSearchSet(q int) {
+	d.S = newSearchSet(d, q)
 }
 
-func (d *indexedDocument) size() int {
+func (d *IndexedDocument) size() int {
 	return len(d.Tokens)
 }
 
@@ -63,7 +63,7 @@ func (d *indexedDocument) size() int {
 // single space. This is used by the diff algorithm.
 // TODO: it'd be more efficient to have the diff algorithm work with the raw tokens directly
 // and avoid these ephemeral allocations.
-func (d *indexedDocument) normalized() string {
+func (d *IndexedDocument) normalized() string {
 	var w strings.Builder
 	for i, t := range d.Tokens {
 		w.WriteString(d.dict.getWord(t.ID))
@@ -113,17 +113,17 @@ func (c *Classifier) addDocument(category, name, variant string, doc *document) 
 	indexName := c.generateDocName(category, name, variant)
 	id := c.generateIndexedDocument(doc, true)
 	id.generateFrequencies()
-	id.generateSearchSet(c.q)
-	id.s.origin = indexName
-	c.docs[indexName] = id
+	id.generateSearchSet(c.Q)
+	id.S.origin = indexName
+	c.Docs[indexName] = id
 }
 
-// generateIndexedDocument creates an indexedDocument from the supplied document. if addWords
+// generateIndexedDocument creates an IndexedDocument from the supplied document. if addWords
 // is true, the classifier dictionary is updated with new tokens encountered in the document.
-func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *indexedDocument {
-	id := &indexedDocument{
+func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *IndexedDocument {
+	id := &IndexedDocument{
 		Tokens: make([]indexedToken, 0, len(d.Tokens)),
-		dict:   c.dict,
+		dict:   c.Dict,
 	}
 
 	for _, t := range d.Tokens {
@@ -142,7 +142,7 @@ func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *indexe
 
 	}
 	id.generateFrequencies()
-	id.runes = diffWordsToRunes(id, 0, id.size())
+	id.Runes = diffWordsToRunes(id, 0, id.size())
 	id.norm = id.normalized()
 	return id
 }
@@ -150,7 +150,7 @@ func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *indexe
 // createTargetIndexedDocument creates an indexed document without adding the
 // words to the classifier dictionary. This should be used for matching targets, not
 // populating the corpus.
-func (c *Classifier) createTargetIndexedDocument(in []byte) *indexedDocument {
+func (c *Classifier) createTargetIndexedDocument(in []byte) *IndexedDocument {
 	doc := tokenize(in)
 	return c.generateIndexedDocument(doc, false)
 }
@@ -158,34 +158,34 @@ func (c *Classifier) createTargetIndexedDocument(in []byte) *indexedDocument {
 func (c *Classifier) generateDocName(category, name, variant string) string {
 	return fmt.Sprintf("%s%c%s%c%s", category, os.PathSeparator, name, os.PathSeparator, variant)
 }
-func (c *Classifier) getIndexedDocument(category, name, variant string) *indexedDocument {
-	return c.docs[c.generateDocName(category, name, variant)]
+func (c *Classifier) getIndexedDocument(category, name, variant string) *IndexedDocument {
+	return c.Docs[c.generateDocName(category, name, variant)]
 }
 
 // dictionary is used to intern all the token words encountered in the text corpus.
 // words and indices form an inverse mapping relationship. It is just a convenience type
 // over a pair of correlated maps.
-type dictionary struct {
-	words   map[tokenID]string
-	indices map[string]tokenID
+type Dictionary struct {
+	Words   map[tokenID]string
+	Indices map[string]tokenID
 }
 
-func newDictionary() *dictionary {
-	return &dictionary{
-		words:   make(map[tokenID]string),
-		indices: make(map[string]tokenID),
+func newDictionary() *Dictionary {
+	return &Dictionary{
+		Words:   make(map[tokenID]string),
+		Indices: make(map[string]tokenID),
 	}
 }
 
 // add inserts the provided word into the dictionary if it does not already exist.
-func (d *dictionary) add(word string) tokenID {
+func (d *Dictionary) add(word string) tokenID {
 	if idx := d.getIndex(word); idx != unknownIndex {
 		return idx
 	}
 	// token IDs start from 1, 0 is reserved for the invalid ID
-	idx := tokenID(len(d.words) + 1)
-	d.words[idx] = word
-	d.indices[word] = idx
+	idx := tokenID(len(d.Words) + 1)
+	d.Words[idx] = word
+	d.Indices[word] = idx
 	return idx
 }
 
@@ -193,16 +193,16 @@ var unknownWord = "UNKNOWN"
 var unknownIndex = tokenID(0)
 
 // getIndex returns the index of the supplied word, or 0 if the word is not in the dictionary.
-func (d *dictionary) getIndex(word string) tokenID {
-	if idx, found := d.indices[word]; found {
+func (d *Dictionary) getIndex(word string) tokenID {
+	if idx, found := d.Indices[word]; found {
 		return idx
 	}
 	return unknownIndex
 }
 
 // getWord returns the word associated with the index.
-func (d *dictionary) getWord(index tokenID) string {
-	if word, found := d.words[index]; found {
+func (d *Dictionary) getWord(index tokenID) string {
+	if word, found := d.Words[index]; found {
 		return word
 	}
 	return unknownWord

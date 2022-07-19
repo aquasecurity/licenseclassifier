@@ -21,20 +21,20 @@ import (
 
 func TestDictionary(t *testing.T) {
 	d := newDictionary()
-	if len(d.words) > 0 {
+	if len(d.Words) > 0 {
 		t.Errorf("new dictionary should not have words populated")
 	}
-	if len(d.indices) > 0 {
+	if len(d.Indices) > 0 {
 		t.Errorf("new dictionary should not have indices populated")
 	}
 
 	// Add a word to the dictionary
 	d.add("hello")
 	// verify internal contents
-	if got := len(d.words); got != 1 {
+	if got := len(d.Words); got != 1 {
 		t.Errorf("dictionary has %d words, expected 1", got)
 	}
-	if got := len(d.indices); got != 1 {
+	if got := len(d.Indices); got != 1 {
 		t.Errorf("dictionary has %d indices, expected 1", got)
 	}
 	if got := d.getIndex("hello"); got != 1 {
@@ -47,10 +47,10 @@ func TestDictionary(t *testing.T) {
 	// Adding the same word to the dictionary doesn't change the dictionary
 	d.add("hello")
 	// verify internal contents
-	if got := len(d.words); got != 1 {
+	if got := len(d.Words); got != 1 {
 		t.Errorf("dictionary has %d words, expected 1", got)
 	}
-	if got := len(d.indices); got != 1 {
+	if got := len(d.Indices); got != 1 {
 		t.Errorf("dictionary has %d indices, expected 1", got)
 	}
 	if got := d.getIndex("hello"); got != 1 {
