@@ -26,9 +26,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -45,10 +43,9 @@ import (
 	"sort"
 	"time"
 
-	classifier "github.com/google/licenseclassifier/v2"
-	"github.com/google/licenseclassifier/v2/assets"
-	"github.com/google/licenseclassifier/v2/tools/identify_license/backend"
-	"github.com/google/licenseclassifier/v2/tools/identify_license/results"
+	classifier "github.com/aquasecurity/licenseclassifier/v2"
+	"github.com/aquasecurity/licenseclassifier/v2/tools/identify_license/backend"
+	"github.com/aquasecurity/licenseclassifier/v2/tools/identify_license/results"
 )
 
 var (
@@ -159,13 +156,6 @@ Options:
 }
 
 func main() {
-	c, _ := assets.DefaultClassifier()
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	if err := enc.Encode(c); err != nil {
-		panic(err)
-	}
-	ioutil.WriteFile("/home/dmitriy/work/licenseclassifier/v2/classifier.gob", buf.Bytes(), 644)
 	flag.Parse()
 
 	be, err := backend.New()
