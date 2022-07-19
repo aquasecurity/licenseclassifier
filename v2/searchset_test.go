@@ -157,7 +157,7 @@ func TestFindPotentialMatches(t *testing.T) {
 
 			doc := c.createTargetIndexedDocument([]byte(test.target))
 			doc.generateSearchSet(c.Q)
-			hits := c.findPotentialMatches(c.getIndexedDocument("", "source", "").s, doc.s, test.confidence)
+			hits := c.findPotentialMatches(c.getIndexedDocument("", "source", "").S, doc.S, test.confidence)
 			if actual := len(hits); actual != test.expectedHits {
 				t.Errorf("got %d hits, wanted %d", actual, test.expectedHits)
 				t.Errorf("Trace:\n%s", trace.String())

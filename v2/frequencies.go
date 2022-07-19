@@ -15,24 +15,24 @@
 package classifier
 
 type FrequencyTable struct {
-	counts map[tokenID]int // key: token ID, value: number of instances of that token
+	Counts map[tokenID]int // key: token ID, value: number of instances of that token
 }
 
 func newFrequencyTable() *FrequencyTable {
 	return &FrequencyTable{
-		counts: make(map[tokenID]int),
+		Counts: make(map[tokenID]int),
 	}
 }
 
 func (f *FrequencyTable) update(d *IndexedDocument) {
 	for _, tok := range d.Tokens {
-		f.counts[tok.ID]++
+		f.Counts[tok.ID]++
 	}
 }
 
 func (d *IndexedDocument) generateFrequencies() {
-	d.f = newFrequencyTable()
-	d.f.update(d)
+	d.F = newFrequencyTable()
+	d.F.update(d)
 }
 
 // TokenSimilarity returns a confidence score of how well d contains
@@ -49,11 +49,11 @@ func (d *IndexedDocument) tokenSimilarity(o *IndexedDocument) float64 {
 	// Profiling indicates a significant amount of time is spent here.
 	// Avoiding checking (or storing) "uninteresting" tokens (common English words)
 	// could help.
-	for t, c := range o.f.counts {
-		if d.f.counts[t] >= c {
+	for t, c := range o.F.Counts {
+		if d.F.Counts[t] >= c {
 			hits++
 		}
 	}
 
-	return float64(hits) / float64(len(o.f.counts))
+	return float64(hits) / float64(len(o.F.Counts))
 }

@@ -46,8 +46,8 @@ func diffRange(known string, diffs []diffmatchpatch.Diff) (start, end int) {
 }
 
 func docDiff(id string, doc1 *IndexedDocument, doc1Start, doc1End int, doc2 *IndexedDocument, doc2Start, doc2End int) []diffmatchpatch.Diff {
-	chars1 := doc1.runes[doc1Start:doc1End]
-	chars2 := doc2.runes[doc2Start:doc2End]
+	chars1 := doc1.Runes[doc1Start:doc1End]
+	chars2 := doc2.Runes[doc2Start:doc2End]
 
 	dmp := diffmatchpatch.New()
 	diffs := dmp.DiffMainRunes(chars1, chars2, false)

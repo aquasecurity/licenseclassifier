@@ -44,15 +44,15 @@ type indexedToken struct {
 
 type IndexedDocument struct {
 	Tokens []indexedToken  // ordered tokens of the document
-	f      *FrequencyTable // frequencies computed for this document
+	F      *FrequencyTable // frequencies computed for this document
 	dict   *Dictionary     // The corpus dictionary for this document
-	s      *SearchSet      // The searchset for this document
-	runes  []rune
+	S      *SearchSet      // The searchset for this document
+	Runes  []rune
 	norm   string // The normalized token sequence
 }
 
 func (d *IndexedDocument) generateSearchSet(q int) {
-	d.s = newSearchSet(d, q)
+	d.S = newSearchSet(d, q)
 }
 
 func (d *IndexedDocument) size() int {
@@ -114,7 +114,7 @@ func (c *Classifier) addDocument(category, name, variant string, doc *document) 
 	id := c.generateIndexedDocument(doc, true)
 	id.generateFrequencies()
 	id.generateSearchSet(c.Q)
-	id.s.origin = indexName
+	id.S.origin = indexName
 	c.Docs[indexName] = id
 }
 
@@ -142,7 +142,7 @@ func (c *Classifier) generateIndexedDocument(d *document, addWords bool) *Indexe
 
 	}
 	id.generateFrequencies()
-	id.runes = diffWordsToRunes(id, 0, id.size())
+	id.Runes = diffWordsToRunes(id, 0, id.size())
 	id.norm = id.normalized()
 	return id
 }

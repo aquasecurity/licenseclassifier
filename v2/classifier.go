@@ -95,7 +95,7 @@ func (c *Classifier) match(in []byte) Results {
 
 	var candidates Matches
 	for l, d := range firstPass {
-		matches := c.findPotentialMatches(d.s, id.s, c.Threshold)
+		matches := c.findPotentialMatches(d.S, id.S, c.Threshold)
 		for _, m := range matches {
 			startIndex := m.TargetStart
 			endIndex := m.TargetEnd
